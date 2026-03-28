@@ -1,9 +1,10 @@
 import streamlit as st
-import tensorflow as tf
+import keras
 import numpy as np
 import cv2
 import tempfile
 import os
+from huggingface_hub import hf_hub_download
 
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="KTH Action Recognition", page_icon="🎬", layout="centered")
@@ -11,9 +12,11 @@ st.set_page_config(page_title="KTH Action Recognition", page_icon="🎬", layout
 # --- 2. LOAD MODEL ---
 @st.cache_resource
 def load_model():
-    from huggingface_hub import hf_hub_download
-model_path = hf_hub_download(repo_id="Sanrachana/kth-action-model", filename="KTH_Final_Model.keras")
-model = tf.keras.models.load_model(model_path)
+    model_path = hf_hub_download(
+        repo_id="Sanrachana/kth-action-model",
+        filename="KTH_Final_Model.keras"
+    )
+    model = keras.saving.load_model(model_path)
     return model
 
 model = load_model()
@@ -23,7 +26,7 @@ ACTIONS = ['boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walkin
 MAX_FRAMES = 15
 SIZE = (64, 64)
 
-# --- 4. VIDEO PROCESSING (matches your training exactly) ---
+# --- 4. VIDEO PROCESSING ---
 def process_video(video_path):
     frames = []
     cap = cv2.VideoCapture(video_path)
@@ -54,27 +57,23 @@ st.divider()
 st.markdown("**Supported Actions:** Boxing · Handclapping · Handwaving · Jogging · Running · Walking")
 st.divider()
 
-uploaded_file = st.file_uploader("Upload a video file", type=["mp4", "avi", "mov", "mpeg4"])
+uploaded_file = st.file_uploader("Upload a video file", type=["mp4", "avi", "mov"])
 
 if uploaded_file is not None:
-    # Save uploaded file to a temp location
     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
         tmp.write(uploaded_file.read())
         tmp_path = tmp.name
 
-    # Show the video
     st.video(uploaded_file)
 
     with st.spinner("Analyzing video..."):
-        # Process and predict
         frames = process_video(tmp_path)
         frames = frames.reshape(1, MAX_FRAMES, SIZE[0], SIZE[1], 1)
         predictions = model.predict(frames, verbose=0)
         predicted_idx = np.argmax(predictions)
         predicted_action = ACTIONS[predicted_idx]
-        confidence = np.max(predictions) * 100
+        confidence = float(np.max(predictions)) * 100
 
-    # Clean up temp file
     os.unlink(tmp_path)
 
     # --- 6. RESULTS ---
@@ -82,10 +81,9 @@ if uploaded_file is not None:
     st.subheader("Results")
     st.success(f"Predicted Action: **{predicted_action.upper()}** ({confidence:.1f}% confidence)")
 
-    # Show all probabilities
     st.markdown("**Confidence per action:**")
     for i, action in enumerate(ACTIONS):
-        st.progress(float(predictions[0][i]), text=f"{action.capitalize()}: {predictions[0][i]*100:.1f}%")
+        st.progress(float(predictions[0][i]), text=f"{action.capitalize()}: {float(predictions[0][i])*100:.1f}%")
 
 st.divider()
 st.caption("Developed for Pre-Final Year Lab Assignment - 2026")
