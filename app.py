@@ -11,7 +11,9 @@ st.set_page_config(page_title="KTH Action Recognition", page_icon="🎬", layout
 # --- 2. LOAD MODEL ---
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model('KTH_Final_Model.keras')
+    from huggingface_hub import hf_hub_download
+model_path = hf_hub_download(repo_id="Sanrachana/kth-action-model", filename="KTH_Final_Model.keras")
+model = tf.keras.models.load_model(model_path)
     return model
 
 model = load_model()
