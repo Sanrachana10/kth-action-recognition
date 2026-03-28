@@ -1,5 +1,5 @@
 import streamlit as st
-import keras
+import tensorflow as tf
 import numpy as np
 import cv2
 import tempfile
@@ -16,7 +16,7 @@ def load_model():
         repo_id="Sanrachana/kth-action-model",
         filename="KTH_Final_Model.keras"
     )
-    model = keras.saving.load_model(model_path)
+    model = tf.keras.models.load_model(model_path)
     return model
 
 model = load_model()
