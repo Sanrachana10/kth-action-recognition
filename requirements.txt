@@ -1,5 +1,6 @@
 streamlit
-keras
+tensorflow==2.19.0
+keras==3.13.2
 opencv-python-headless
 numpy
 huggingface_hub
