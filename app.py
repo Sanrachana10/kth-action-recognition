@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import tempfile
 import os
+from streamlit.components.v1 import html as st_html
 from huggingface_hub import hf_hub_download
 
 # ─────────────────────────────────────────────
@@ -143,9 +144,10 @@ st.markdown("""
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     padding: 14px 56px;
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 40px;
+    flex-wrap: wrap;
 }
 .counter-item {
     display: flex;
@@ -180,6 +182,7 @@ st.markdown("""
     width: 1px;
     height: 28px;
     background: var(--border);
+    flex-shrink: 0;
 }
 
 /* ── IMPACT SECTION ── */
@@ -208,6 +211,12 @@ st.markdown("""
     grid-template-columns: repeat(4, 1fr);
     gap: 14px;
     margin-top: 16px;
+}
+@media (max-width: 900px) {
+    .persona-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 540px) {
+    .persona-grid { grid-template-columns: 1fr; }
 }
 .persona-card {
     background: var(--bg-panel);
@@ -443,8 +452,10 @@ st.markdown("""
     border-radius: 10px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    min-height: 280px; text-align: center; padding: 40px;
+    min-height: 300px; text-align: center; padding: 40px;
     gap: 10px;
+    box-sizing: border-box;
+    width: 100%;
 }
 .empty-icon { font-size: 2.8rem; opacity: 0.3; }
 .empty-ttl {
@@ -467,7 +478,11 @@ st.markdown("""
     background: var(--bg-card);
     border-top: 1px solid var(--border);
     padding: 20px 56px;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 .footer-l {
     font-family: 'JetBrains Mono', monospace;
@@ -476,7 +491,7 @@ st.markdown("""
     text-transform: uppercase;
     color: var(--text-muted);
 }
-.footer-r { display: flex; gap: 10px; }
+.footer-r { display: flex; gap: 10px; flex-wrap: wrap; }
 .ftag {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.58rem;
@@ -571,6 +586,12 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-family: 'Syne', sans-serif !important;
     font-size: 1.3rem !important;
     font-weight: 700 !important;
+}
+
+/* ── METRICS ROW WRAPPER ── */
+.metrics-row {
+    padding: 0 56px 36px;
+    background: var(--bg-deep);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -737,6 +758,7 @@ if "dyk_idx" not in st.session_state:
 
 # ─────────────────────────────────────────────
 # 1. TICKER
+# Fix: duplicate ticker content so the seamless loop works at -50%
 # ─────────────────────────────────────────────
 ticker_items = [
     "Physical Rehabilitation",
@@ -748,7 +770,9 @@ ticker_items = [
     "Touchless Assistive Tech",
     "Remote Patient Monitoring",
 ]
-ticker_text = "  ·  ".join([f"⬡  {t}" for t in ticker_items * 4])
+# Build one set, then duplicate it inside the span so translateX(-50%) loops seamlessly
+ticker_half = "  ·  ".join([f"⬡  {t}" for t in ticker_items])
+ticker_text = f"{ticker_half}  ·  {ticker_half}"
 st.markdown(f"""
 <div class="ticker-wrap">
   <div class="ticker-track">
@@ -781,8 +805,37 @@ st.markdown("""
 
 # ─────────────────────────────────────────────
 # 3. LIVE COUNTER STRIP
+# Fix: use st_html so the <script> actually runs (st.markdown strips scripts)
 # ─────────────────────────────────────────────
-st.markdown("""
+st_html("""
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: transparent; }
+  .counter-strip {
+    background: #162032;
+    border-bottom: 1px solid #334155;
+    padding: 14px 56px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .counter-item { display: flex; align-items: center; gap: 12px; }
+  .counter-dot {
+    width: 8px; height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: blink 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.7); }
+  }
+  .counter-val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #10b981; }
+  .counter-lbl { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; }
+  .counter-divider { width: 1px; height: 28px; background: #334155; flex-shrink: 0; }
+</style>
 <div class="counter-strip">
   <div class="counter-item">
     <div class="counter-dot"></div>
@@ -817,23 +870,22 @@ st.markdown("""
   </div>
 </div>
 <script>
-// Gently tick up session count to feel live
-let base = 2847;
-setInterval(() => {
-  base += Math.floor(Math.random() * 2);
-  const el = document.getElementById('cnt1');
-  if (el) el.innerText = base.toLocaleString();
-}, 3200);
-let rehab = 134;
-setInterval(() => {
-  if (Math.random() > 0.7) {
-    rehab += 1;
-    const el = document.getElementById('cnt2');
-    if (el) el.innerText = rehab;
-  }
-}, 5000);
+  let base = 2847;
+  setInterval(() => {
+    base += Math.floor(Math.random() * 2);
+    const el = document.getElementById('cnt1');
+    if (el) el.innerText = base.toLocaleString();
+  }, 3200);
+  let rehab = 134;
+  setInterval(() => {
+    if (Math.random() > 0.7) {
+      rehab += 1;
+      const el = document.getElementById('cnt2');
+      if (el) el.innerText = rehab;
+    }
+  }, 5000);
 </script>
-""", unsafe_allow_html=True)
+""", height=70)
 
 
 # ─────────────────────────────────────────────
@@ -901,7 +953,7 @@ with col_l:
     st.markdown('<div class="panel-label">Video Input</div>', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Upload or Record an Action Clip</div>', unsafe_allow_html=True)
 
-    tab1, tab2 = st.tabs(["&#128193;  Upload File", "&#127909;  Record Live"])
+    tab1, tab2 = st.tabs(["📁  Upload File", "🎥  Record Live"])
 
     with tab1:
         st.markdown('<div class="scan-box">', unsafe_allow_html=True)
@@ -916,7 +968,7 @@ with col_l:
         st.markdown('</div>', unsafe_allow_html=True)
 
         if uploaded:
-            if st.button("&#9889;  Analyze Action", key="btn_up", use_container_width=True):
+            if st.button("⚡  Analyze Action", key="btn_up", use_container_width=True):
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
                     tmp.write(uploaded.read())
                     tmp_path = tmp.name
@@ -927,7 +979,6 @@ with col_l:
                 st.rerun()
 
     with tab2:
-        from streamlit.components.v1 import html as st_html
         st_html("""
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
         <style>
@@ -977,7 +1028,7 @@ with col_l:
         recorded = st.file_uploader("Upload recorded", type=["webm","mp4","mov"], key="rec_up", label_visibility="collapsed")
         if recorded:
             st.video(recorded)
-            if st.button("&#9889;  Analyze Action", key="btn_rec", use_container_width=True):
+            if st.button("⚡  Analyze Action", key="btn_rec", use_container_width=True):
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp:
                     tmp.write(recorded.read())
                     tmp_path = tmp.name
@@ -997,7 +1048,7 @@ with col_l:
       <div class="dyk-fact">{fact}</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("Next Fact &#8594;", key="nxtfact"):
+    if st.button("Next Fact →", key="nxtfact"):
         st.session_state.dyk_idx += 1
         st.rerun()
 
@@ -1067,7 +1118,7 @@ with col_r:
         """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("&#8635;  Analyze New Video", use_container_width=True, key="reset"):
+        if st.button("↺  Analyze New Video", use_container_width=True, key="reset"):
             st.session_state.result = None
             st.rerun()
 
@@ -1076,8 +1127,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # 6. METRICS ROW
+# Fix: use a wrapper div with class instead of raw inline style string
 # ─────────────────────────────────────────────
-st.markdown('<div style="padding: 0 56px 36px; background: var(--bg-deep);">', unsafe_allow_html=True)
+st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.metric("Model Architecture", "ConvLSTM", "Temporal Encoding")
@@ -1092,8 +1144,42 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # 7. FOOTER
+# Fix: use st_html so flexbox layout renders correctly
 # ─────────────────────────────────────────────
-st.markdown("""
+st_html("""
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: transparent; }
+  .app-footer {
+    background: #162032;
+    border-top: 1px solid #334155;
+    padding: 20px 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+  .footer-r { display: flex; gap: 10px; flex-wrap: wrap; }
+  .ftag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #10b981;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.28);
+    padding: 3px 10px;
+    border-radius: 3px;
+  }
+</style>
 <div class="app-footer">
   <div class="footer-l">MotionIQ &middot; Pre-Final Year Lab Exhibition 2026 &middot; KTH Action Recognition</div>
   <div class="footer-r">
@@ -1103,4 +1189,4 @@ st.markdown("""
     <span class="ftag">OpenCV</span>
   </div>
 </div>
-""", unsafe_allow_html=True)
+""", height=70)
