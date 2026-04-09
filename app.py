@@ -628,7 +628,7 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 def load_model():
     if tf is None:
         return None
-   try:
+    try:
     path = hf_hub_download(
         repo_id="Sanrachana/kth-action-model",
         filename="KTH_Final_Model.keras"
