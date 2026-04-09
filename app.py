@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 import tempfile
 import os
-import streamlit.components.v1 as components
+import streamlit.components.v1 as components  # ✅ FIX 1
 from huggingface_hub import hf_hub_download
 
 # ─────────────────────────────────────────────
@@ -37,8 +37,6 @@ st.markdown("""
     --text-main: #f1f5f9;
     --text-muted: #94a3b8;
     --border: #334155;
-    --danger: #f43f5e;
-    --warn: #f59e0b;
 }
 
 /* ── Reset ── */
@@ -187,7 +185,6 @@ div[data-testid="stColumn"] {
     gap: 14px;
     margin-top: 16px;
 }
-
 .persona-card {
     background: var(--bg-panel);
     border: 1px solid var(--border);
@@ -199,7 +196,6 @@ div[data-testid="stColumn"] {
     overflow: hidden;
 }
 .persona-card:hover { border-color: var(--primary-border); transform: translateY(-3px); }
-
 .persona-name {
     font-family: 'Syne', sans-serif;
     font-size: 0.95rem;
@@ -240,15 +236,6 @@ div[data-testid="stColumn"] {
 }
 .panel-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-.scan-box {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-}
-
 .result-card {
     background: var(--bg-panel);
     border: 1px solid var(--primary-border);
@@ -256,45 +243,6 @@ div[data-testid="stColumn"] {
     padding: 24px 26px;
     position: relative;
     overflow: hidden;
-}
-
-.conf-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.cbar-row { display: flex; align-items: center; gap: 10px; }
-.cbar-track {
-    flex: 1; height: 5px;
-    background: var(--border);
-    border-radius: 3px; overflow: hidden;
-}
-.cbar-fill { height: 100%; border-radius: 3px; }
-.cf-top { background: linear-gradient(90deg, var(--primary), #34d399); }
-
-.impact-callout {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--primary);
-    border-radius: 0 8px 8px 0;
-    padding: 16px 18px;
-    margin-top: 18px;
-}
-
-.skeleton-wrap {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    margin-top: 18px;
-}
-
-.dyk-box {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 22px 24px;
-    position: relative;
 }
 
 .empty-box {
@@ -307,11 +255,6 @@ div[data-testid="stColumn"] {
     gap: 10px;
     box-sizing: border-box;
     width: 100%;
-}
-
-.metrics-row {
-    padding: 0 56px 36px;
-    background: var(--bg-deep);
 }
 
 /* ── STREAMLIT OVERRIDES ── */
@@ -340,16 +283,6 @@ def load_model():
 
 model = load_model()
 ACTIONS = ['boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking']
-ACTION_ICONS = ['🥊', '👏', '🙋', '🏃', '⚡', '🚶']
-
-ACTION_IMPACT = {
-    'boxing':       ('Combat Training Monitor', 'Tracks punch repetitions and rhythm to give solo athletes real-time form feedback.'),
-    'handclapping': ('Gesture Interface',        'Powers touchless UI control for people with motor impairments.'),
-    'handwaving':   ('Smart Home Trigger',       'Activates home automation for elderly individuals.'),
-    'jogging':      ('Rehab Progress Tracker',   'Monitors jogging gait patterns in stroke recovery patients.'),
-    'running':      ('Athletic Performance AI',  'Flags biomechanical inefficiencies in sprinting form.'),
-    'walking':      ('Fall Risk Detection',       'Passively monitors walking patterns in elders 24/7.'),
-}
 
 def process_video(video_path):
     frames = []
@@ -376,7 +309,6 @@ def run_inference(video_path):
     return ACTIONS[idx], float(np.max(preds)) * 100, preds
 
 if "result" not in st.session_state: st.session_state.result = None
-if "dyk_idx" not in st.session_state: st.session_state.dyk_idx = 0
 
 # ─────────────────────────────────────────────
 # 1. TICKER
@@ -394,16 +326,13 @@ st.markdown("""
   <div class="header-eyebrow">&#9679; &nbsp; Live System &nbsp;·&nbsp; Neural Vision v2</div>
   <div class="header-title">Motion<em>IQ</em></div>
   <div class="header-desc">AI-powered human action recognition built for real-world social impact.</div>
-  <div class="header-stats">
-    <div class="hstat"><div class="hstat-n">6</div><div class="hstat-l">Classes</div></div>
-    <div class="hstat"><div class="hstat-n">ConvLSTM</div><div class="hstat-l">Architecture</div></div>
-  </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # 3. LIVE COUNTER STRIP
 # ─────────────────────────────────────────────
+# ✅ FIX 2: Updated call to components.html with scrolling=False
 components.html("""
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
@@ -424,7 +353,7 @@ components.html("""
 </script>
 """, height=70, scrolling=False)
 
-st.write("")  # ✅ FIX 3: Forces DOM reset before persona section
+st.write("")  # ✅ FIX 3: Critical DOM reset to ensure following markdown renders properly
 
 # ─────────────────────────────────────────────
 # 4. PERSONA SECTION
@@ -432,7 +361,7 @@ st.write("")  # ✅ FIX 3: Forces DOM reset before persona section
 st.markdown("""
 <div class="impact-section">
   <div class="section-head">Social Impact</div>
-  <div class="section-title">Who Does This Help?</div>
+  <div class="section-title">Who Does This Technology Help?</div>
   <div class="persona-grid">
     <div class="persona-card">
       <div class="persona-name">Arjun, 68</div>
@@ -484,6 +413,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 # ─────────────────────────────────────────────
 # 7. FOOTER
 # ─────────────────────────────────────────────
+# ✅ FIX 2 (Continued): Consistent use of components.html
 components.html("""
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
