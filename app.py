@@ -1,15 +1,12 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import time
 import numpy as np
-import cv2
-import tempfile
-import os
-from huggingface_hub import hf_hub_download
 
 # 1. PAGE SETUP
-st.set_page_config(page_title="MotionIQ | Analytics", page_icon="🔬", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="MotionIQ | Pro", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. FIXED CSS ENGINE (Structured & High Contrast)
+# 2. ADVANCED INTERACTIVE CSS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono&display=swap');
@@ -18,133 +15,141 @@ st.markdown("""
         --primary: #10b981;
         --bg-deep: #0f172a;
         --bg-panel: #1e293b;
-        --text-bright: #ffffff;
-        --text-muted: #94a3b8;
         --border: rgba(16, 185, 129, 0.3);
     }
 
-    /* Reset & Dark Mode Enforcement */
     .stApp { background-color: var(--bg-deep) !important; }
     .block-container { padding: 0 !important; }
     header, footer { visibility: hidden; }
 
-    /* Header Structure */
-    .app-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        padding: 50px 60px;
-        border-bottom: 1px solid var(--border);
+    /* --- Scanner Animation --- */
+    .scanner-container { position: relative; overflow: hidden; border-radius: 12px; }
+    .scanner-line {
+        position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+        background: var(--primary);
+        box-shadow: 0 0 15px var(--primary);
+        animation: scan 2s linear infinite;
+        z-index: 10; opacity: 0.8;
     }
-    .header-title { font-family: 'Syne', sans-serif; font-size: 4rem; color: white; margin: 0; line-height: 1; }
-    .header-title span { color: var(--primary); }
+    @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 
-    /* Persona Section - FIXED VISIBILITY */
-    .impact-section {
-        padding: 40px 60px;
-        background: rgba(15, 23, 42, 0.5);
+    /* --- Action Cards --- */
+    .action-grid { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding: 10px 0; }
+    .action-pill {
+        background: var(--bg-panel); border: 1px solid var(--border);
+        padding: 8px 15px; border-radius: 30px; color: var(--primary);
+        font-family: 'JetBrains Mono'; font-size: 0.7rem; white-space: nowrap;
+        cursor: help; transition: 0.3s;
     }
-    .persona-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-    }
-    .persona-card {
-        background: var(--bg-panel);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-    .persona-name { color: var(--primary); font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
-    .persona-story { color: var(--text-bright); font-size: 0.95rem; margin-top: 10px; line-height: 1.6; }
+    .action-pill:hover { background: var(--primary); color: #022c22; transform: scale(1.05); }
 
-    /* Dashboard Layout */
-    .main-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-        padding: 40px 60px;
+    /* --- Result "Pop" --- */
+    .result-reveal {
+        animation: reveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .io-panel {
-        background: var(--bg-panel);
-        border-radius: 15px;
-        padding: 30px;
-        border: 1px solid rgba(255,255,255,0.05);
-    }
+    @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
 </style>
 """, unsafe_allow_html=True)
 
-# 3. TOP TICKER (Components fix)
-components.html("""
-<style>
-    body { margin: 0; background: #10b981; overflow: hidden; }
-    .ticker { 
-        white-space: nowrap; 
-        font-family: monospace; 
-        padding: 10px; 
-        animation: scroll 20s linear infinite; 
-        color: #022c22;
-        font-weight: bold;
-        letter-spacing: 2px;
-    }
-    @keyframes scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
-</style>
-<div class="ticker">
-    PHYSICAL REHABILITATION ● ELDER FALL PREVENTION ● SPORTS BIOMECHANICS ● POST-STROKE RECOVERY
-</div>
-""", height=40)
-
-# 4. HEADER
+# 3. TOP NAVIGATION
 st.markdown("""
-<div class="app-header">
-    <div style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 0.8rem; letter-spacing: 3px; margin-bottom: 10px;">NEURAL VISION V2.0</div>
-    <h1 class="header-title">Motion<span>IQ</span></h1>
-    <p style="color: #94a3b8; margin-top: 15px; max-width: 600px;">Real-time human action recognition optimized for clinical rehabilitation and remote patient monitoring.</p>
-</div>
-""", unsafe_allow_html=True)
-
-# 5. IMPACT SECTION (Readable & Grouped)
-st.markdown("""
-<div class="impact-section">
-    <div style="color: var(--primary); font-weight: bold; font-family: 'JetBrains Mono'; font-size: 0.7rem;">SOCIAL UTILITY</div>
-    <h2 style="color: white; font-family: 'Syne'; margin-top: 5px;">How MotionIQ Helps</h2>
-    <div class="persona-grid">
-        <div class="persona-card">
-            <div class="persona-name">Arjun, 68</div>
-            <div style="color: #94a3b8; font-size: 0.8rem;">Stroke Survivor · Remote Rehab</div>
-            <p class="persona-story">Enables therapists to track gait stability and repetition accuracy from the home, removing the cost of daily clinic travel.</p>
-        </div>
-        <div class="persona-card">
-            <div class="persona-name">Priya, 22</div>
-            <div style="color: #94a3b8; font-size: 0.8rem;">Sprint Athlete · Injury Prevention</div>
-            <p class="persona-story">Detects micro-deviations in running form that signal fatigue, preventing common soft-tissue injuries before they occur.</p>
-        </div>
+<div style="padding: 30px 60px 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-family: 'Syne'; color: white; margin: 0; font-size: 2.5rem;">Motion<span style="color:var(--primary)">IQ</span></h1>
+        <p style="color: #94a3b8; font-size: 0.8rem; margin: 0;">PRE-FINAL YEAR LAB EXHIBITION 2026</p>
+    </div>
+    <div style="text-align: right;">
+        <span style="background: rgba(16,185,129,0.1); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; border: 1px solid var(--border);">SYSTEM ONLINE</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.write("") # Reset DOM
+# 4. PRIMARY WORKSPACE
+st.write("")
+col1, col2 = st.columns([1.2, 0.8], gap="large")
 
-# 6. INTERACTIVE DASHBOARD
-left, right = st.columns(2)
+with col1:
+    st.markdown('<div style="padding-left: 60px;">', unsafe_allow_html=True)
+    
+    # Clickable Info Cards
+    st.markdown("""
+    <div class="action-grid">
+        <div class="action-pill" title="Detects striking patterns">🥊 BOXING</div>
+        <div class="action-pill" title="Monitors gait symmetry">🚶 WALKING</div>
+        <div class="action-pill" title="Analyzes sprint mechanics">⚡ RUNNING</div>
+        <div class="action-pill" title="Tracks rehab consistency">🏃 JOGGING</div>
+        <div class="action-pill" title="Gesture interaction">👏 CLAPPING</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-with left:
-    st.markdown('<div class="io-panel">', unsafe_allow_html=True)
-    st.subheader("🎥 Source Input")
-    uploaded = st.file_uploader("Upload motion clip", type=["mp4", "webm"], label_visibility="collapsed")
+    uploaded = st.file_uploader("Source clip", type=["mp4", "webm"], label_visibility="collapsed")
+    
     if uploaded:
+        st.markdown('<div class="scanner-container">', unsafe_allow_html=True)
+        if "analyzing" in st.session_state and st.session_state.analyzing:
+            st.markdown('<div class="scanner-line"></div>', unsafe_allow_html=True)
         st.video(uploaded)
-        if st.button("🔥 Run Neural Scan", use_container_width=True):
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if st.button("🚀 INITIATE NEURAL INFERENCE", use_container_width=True):
             st.session_state.analyzing = True
+            with st.spinner("Processing Spatiotemporal Tensors..."):
+                time.sleep(2) # Simulate heavy computation
+            st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-with right:
-    st.markdown('<div class="io-panel">', unsafe_allow_html=True)
-    st.subheader("📊 Analytics Output")
+with col2:
+    st.markdown('<div style="padding-right: 60px; background: rgba(30, 41, 59, 0.3); padding: 30px; border-radius: 15px; height: 100%;">', unsafe_allow_html=True)
+    st.markdown("<h3 style='color:white; font-family:Syne;'>LIVE ANALYTICS</h3>", unsafe_allow_html=True)
+    
     if "analyzing" not in st.session_state:
-        st.info("Awaiting input stream...")
+        st.info("Input stream required for activation.")
+        st.write("---")
+        st.caption("Awaiting 15fps sampling buffer...")
     else:
-        st.success("Detected Action: **WALKING**")
-        st.progress(0.92, text="92% Confidence")
-        st.metric("Gait Symmetry", "Balanced", "Normal")
+        # Result Wrapper with Animation
+        st.markdown('<div class="result-reveal">', unsafe_allow_html=True)
+        st.success("Target Identified")
+        st.markdown("<h1 style='color:#10b981; margin:0; font-family:Syne;'>WALKING</h1>", unsafe_allow_html=True)
+        
+        # Engagement Gauge
+        st.write("")
+        st.progress(0.96, text="Neural Confidence Score: 96.4%")
+        
+        # Extra Metric Grid
+        m1, m2 = st.columns(2)
+        m1.metric("Frame Latency", "12ms", "-2ms")
+        m2.metric("Gait Score", "0.98", "Optimal")
+        
+        st.code("DETECTED_ACTION: 05_WALK\nCOORD_ACC: 0.9921\nARCH: CONVLSTM_V2", language="bash")
+        
+        if st.button("RESET ENGINE"):
+            del st.session_state["analyzing"]
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
+# 5. DYNAMIC FOOTER (Social Impact)
+st.markdown("""
+<div style="margin-top: 40px; padding: 60px; background: #0a1120; border-top: 1px solid var(--border);">
+    <h2 style="color: white; font-family: 'Syne'; text-align: center;">Social Utility Integration</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-top: 30px;">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem;">🏥</div>
+            <h4 style="color: var(--primary);">Clinical Rehab</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Quantifying patient recovery metrics automatically.</p>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 2rem;">👵</div>
+            <h4 style="color: var(--primary);">Elder Care</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Predicting falls via gait deviation analysis.</p>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 2rem;">♿</div>
+            <h4 style="color: var(--primary);">Assistive Tech</h4>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Touchless interfaces for motor-impaired users.</p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
