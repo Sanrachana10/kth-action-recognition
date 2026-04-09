@@ -1,5 +1,8 @@
 import streamlit as st
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except:
+    tf = None
 import numpy as np
 import cv2
 import tempfile
@@ -623,6 +626,8 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 # ─────────────────────────────────────────────
 @st.cache_resource
 def load_model():
+    if tf is None:
+        return None
     try:
         path = hf_hub_download(
             repo_id="Sanrachana/kth-action-model",
@@ -632,6 +637,7 @@ def load_model():
         return model
     except Exception as e:
         st.error(f"Model loading failed: {e}")   # 👈 ADD THIS
+        except:
         return None
 model = load_model()
 
