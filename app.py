@@ -163,52 +163,6 @@ div[data-testid="stColumn"] {
     margin-top: 3px;
 }
 
-/* ── LIVE COUNTER STRIP ── */
-.counter-strip {
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 56px;
-    display: flex !important;
-    align-items: center;
-    gap: 40px;
-    flex-wrap: wrap;
-}
-.counter-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.counter-dot {
-    width: 8px; height: 8px;
-    background: var(--primary);
-    border-radius: 50%;
-    animation: blink 1.4s ease-in-out infinite;
-    flex-shrink: 0;
-}
-@keyframes blink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.3; transform: scale(0.7); }
-}
-.counter-val {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-.counter-lbl {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-.counter-divider {
-    width: 1px;
-    height: 28px;
-    background: var(--border);
-    flex-shrink: 0;
-}
-
 /* ── IMPACT SECTION ── */
 .impact-section {
     background: var(--bg-deep);
@@ -498,11 +452,11 @@ div[data-testid="stColumn"] {
 }
 
 /* ── FOOTER ── */
-.app-footer {
+.footer-row {
     background: var(--bg-card);
     border-top: 1px solid var(--border);
     padding: 20px 56px;
-    display: flex !important;
+    display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -612,7 +566,6 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-weight: 700 !important;
 }
 
-/* ── METRICS ROW WRAPPER ── */
 .metrics-row {
     padding: 0 56px 36px;
     background: var(--bg-deep);
@@ -788,7 +741,7 @@ if "dyk_idx" not in st.session_state:
 
 # ─────────────────────────────────────────────
 # 1. TICKER
-# Fix: duplicate ticker content so the seamless loop works at -50%
+# Duplicate content inside the span so the seamless loop works perfectly
 # ─────────────────────────────────────────────
 ticker_items = [
     "Physical Rehabilitation",
@@ -800,7 +753,6 @@ ticker_items = [
     "Touchless Assistive Tech",
     "Remote Patient Monitoring",
 ]
-# Build one set, then duplicate it inside the span so translateX(-50%) loops seamlessly
 ticker_half = "  ·  ".join([f"⬡  {t}" for t in ticker_items])
 ticker_text = f"{ticker_half}  ·  {ticker_half}"
 st.markdown(f"""
@@ -835,7 +787,7 @@ st.markdown("""
 
 # ─────────────────────────────────────────────
 # 3. LIVE COUNTER STRIP
-# Fix: use st_html so the <script> actually runs (st.markdown strips scripts)
+# Fix: Move HTML+Script into st_html so it is not stripped
 # ─────────────────────────────────────────────
 st_html("""
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -848,7 +800,6 @@ st_html("""
     display: flex;
     align-items: center;
     gap: 40px;
-    flex-wrap: wrap;
   }
   .counter-item { display: flex; align-items: center; gap: 12px; }
   .counter-dot {
@@ -1157,7 +1108,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # 6. METRICS ROW
-# Fix: use a wrapper div with class instead of raw inline style string
 # ─────────────────────────────────────────────
 st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
 m1, m2, m3, m4 = st.columns(4)
@@ -1174,13 +1124,12 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # 7. FOOTER
-# Fix: use st_html so flexbox layout renders correctly
 # ─────────────────────────────────────────────
 st_html("""
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
   body { margin: 0; background: transparent; }
-  .app-footer {
+  .footer-row {
     background: #162032;
     border-top: 1px solid #334155;
     padding: 20px 56px;
@@ -1210,7 +1159,7 @@ st_html("""
     border-radius: 3px;
   }
 </style>
-<div class="app-footer">
+<div class="footer-row">
   <div class="footer-l">MotionIQ &middot; Pre-Final Year Lab Exhibition 2026 &middot; KTH Action Recognition</div>
   <div class="footer-r">
     <span class="ftag">ConvLSTM</span>
