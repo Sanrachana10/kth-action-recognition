@@ -122,7 +122,7 @@ st.markdown("""
         font-weight: 700 !important;
     }
 </style>
-""", unsafe_allow_html=True)───────────────────────────────
+""", unsafe_allow_html=True)
 # LOGIC
 # ─────────────────────────────────────────────
 @st.cache_resource
