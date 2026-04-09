@@ -629,15 +629,15 @@ def load_model():
     if tf is None:
         return None
     try:
-    path = hf_hub_download(
-        repo_id="Sanrachana/kth-action-model",
-        filename="KTH_Final_Model.keras"
-    )
-    model = tf.keras.models.load_model(path)
-    return model
-except Exception as e:
-    st.error(f"Model loading failed: {e}")
-    return None
+        path = hf_hub_download(
+            repo_id="Sanrachana/kth-action-model",
+            filename="KTH_Final_Model.keras"
+        )
+        model = tf.keras.models.load_model(path)
+        return model
+    except Exception as e:
+        st.error(f"Model loading failed: {e}")
+        return None
 model = load_model()
 
 ACTIONS = ['boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking']
