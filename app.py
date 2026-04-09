@@ -624,11 +624,15 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 @st.cache_resource
 def load_model():
     try:
-        path = hf_hub_download(repo_id="Sanrachana/kth-action-model", filename="KTH_Final_Model.keras")
-        return tf.keras.models.load_model(path)
-    except Exception:
+        path = hf_hub_download(
+            repo_id="Sanrachana/kth-action-model",
+            filename="KTH_Final_Model.keras"
+        )
+        model = tf.keras.models.load_model(path)
+        return model
+    except Exception as e:
+        st.error(f"Model loading failed: {e}")   # 👈 ADD THIS
         return None
-
 model = load_model()
 
 ACTIONS = ['boxing', 'handclapping', 'handwaving', 'jogging', 'running', 'walking']
